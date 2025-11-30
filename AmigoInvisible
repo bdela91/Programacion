@@ -1,0 +1,83 @@
+import java.util.Scanner;
+
+public class AmigoInvisible {
+    public static void main(String[] args) {
+
+        Scanner sc = new Scanner(System.in);
+
+        System.out.println("¿Cuántos amigos entran en el juego?");
+        int n = sc.nextInt();
+
+        String[] amigos = new String[n];
+        String[] emparejado = new String[n];
+
+        for (int i = 0; i < n; i++) {
+            System.out.println("Nombre del amigo " + (i + 1) + ":");
+            String nombre = sc.next();
+
+            boolean repetido = false;
+
+            for (int j = 0; j < i; j++) {
+                if (nombre.equals(amigos[j])) {
+                    repetido = true;
+                }
+            }
+
+            if (repetido) {
+                System.out.println("Nombre repetido. Intenta de nuevo.");
+                i--;
+            } else {
+                amigos[i] = nombre;
+            }
+        }
+
+        boolean valido;
+
+        do {
+            valido = true;
+
+            for (int i = 0; i < n; i++) {
+                emparejado[i] = null;
+            }
+
+            for (int i = 0; i < n; i++) {
+                boolean ocupado;
+                String elegido;
+
+                do {
+                    ocupado = false;
+
+                    int r = (int) (Math.random() * n);
+                    elegido = amigos[r];
+
+                    if (elegido.equals(amigos[i])) {
+                        ocupado = true;
+                    }
+
+                    for (int j = 0; j < i; j++) {
+                        if (elegido==emparejado[j]) {
+                            ocupado = true;
+                        }
+                    }
+
+                } while (ocupado);
+
+                emparejado[i] = elegido;
+            }
+
+            for (int i = 0; i < n; i++) {
+                if (amigos[i]== emparejado[i]) {
+                    valido = false;
+                }
+            }
+
+        } while (!valido);
+
+        System.out.println("PAREJAS DEL AMIGO INVISIBLE:");
+        for (int i = 0; i < n; i++) {
+            System.out.println(amigos[i] + " -> " + emparejado[i]);
+        }
+    }
+}
+
+
