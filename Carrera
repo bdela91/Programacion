@@ -1,0 +1,128 @@
+public class Entrada {
+
+    public static void main(String[] args) {
+
+        Coche coche1 = new Coche("BMW", "Serie 3", 120, 2000, "1234ABC");
+        Coche coche2 = new Coche("Seat", "Ibiza", 95, 1600, "5678DEF");
+
+        Carrera carrera = new Carrera(200, 3);
+
+        carrera.setCoches(coche1, coche2);
+
+        carrera.iniciarCarrera();
+    }
+}
+public class Carrera {
+
+    
+    private Coche coche1;
+    private Coche coche2;
+    private Coche ganador;
+    private double kmTotales;
+    private int vueltas;
+
+    
+    public Carrera(double kmTotales, int vueltas) {
+        this.kmTotales = kmTotales;
+        this.vueltas = vueltas;
+        this.ganador = null;
+    }
+
+    
+    public void setCoches(Coche coche1, Coche coche2) {
+        this.coche1 = coche1;
+        this.coche2 = coche2;
+    }
+
+    
+    public void iniciarCarrera() {
+
+        System.out.println(" DATOS DE LOS PARTICIPANTES ");
+        coche1.mostrarDatos();
+        coche2.mostrarDatos();
+
+        boolean carreraTerminada = false;
+
+        while (!carreraTerminada) {
+
+            for (int i = 0; i < vueltas; i++) {
+                coche1.acelerar(30);
+                coche2.acelerar(30);
+            }
+
+            if (coche1.getKmRecorridos() >= kmTotales ||
+                    coche2.getKmRecorridos() >= kmTotales) {
+                carreraTerminada = true;
+            }
+        }
+
+        if (coche1.getKmRecorridos() > coche2.getKmRecorridos()) {
+            ganador = coche1;
+        } else {
+            ganador = coche2;
+        }
+
+        System.out.println(" El ganador ha sido el coche con matrícula " + ganador.getMatricula());
+    }
+}
+public class Coche {
+
+    private String marca;
+    private String modelo;
+    private int cv;
+    private int cc;
+    private String matricula;
+    private double velocidad;
+    private double kmRecorridos;
+
+
+    public Coche(String marca, String modelo, int cv, int cc, String matricula) {
+        this.marca = marca;
+        this.modelo = modelo;
+        this.cv = cv;
+        this.cc = cc;
+        this.matricula = matricula;
+        this.velocidad = 0;
+        this.kmRecorridos = 0;
+    }
+
+
+    public void acelerar(double velocidadIndicada) {
+
+        if (velocidadIndicada < 10) {
+            System.out.println("El coche debe acelerar mínimo 10 km/h");
+            return;
+        }
+
+        double incrementoVelocidad;
+
+        if (cv > 100) {
+            incrementoVelocidad = (Math.random() * velocidadIndicada) + 10;
+        } else {
+            incrementoVelocidad = Math.random() * velocidadIndicada;
+        }
+
+        velocidad += incrementoVelocidad;
+        kmRecorridos += incrementoVelocidad * 0.5;
+    }
+
+
+    public void mostrarDatos() {
+        System.out.println("Marca: " + marca);
+        System.out.println("Modelo: " + modelo);
+        System.out.println("CV: " + cv);
+        System.out.println("CC: " + cc);
+        System.out.println("Matrícula: " + matricula);
+        System.out.println("Velocidad: " + velocidad + " km/h");
+        System.out.println("Km recorridos: " + kmRecorridos);
+    }
+
+
+    public double getKmRecorridos() {
+        return kmRecorridos;
+    }
+
+    public String getMatricula() {
+        return matricula;
+    }
+}
