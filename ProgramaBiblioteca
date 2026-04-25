@@ -1,0 +1,243 @@
+import java.util.Scanner;
+
+public class Main {
+    private static Scanner sc = new Scanner(System.in);
+    private static Biblioteca miBiblioteca = new Biblioteca("Biblioteca Municipal", "Admin");
+
+    public static void main(String[] args) {
+        System.out.println("--- Sistema de Gestión de Biblioteca ---");
+
+
+        System.out.print("Defina la capacidad del catálogo: ");
+        int capacidad = sc.nextInt();
+        miBiblioteca.inicializarCatalogo(capacidad);
+
+        int opcion;
+        do {
+            imprimirMenu();
+            opcion = sc.nextInt();
+            sc.nextLine();
+
+            try {
+                switch (opcion) {
+                    case 1 -> menuAgregarLibro();
+                    case 2 -> eliminarLibro();
+                    case 3 -> buscarLibro();
+                    case 4 -> miBiblioteca.getCatalogo().mostrarLibros();
+                    case 5 -> System.out.println("Libros actuales: " + miBiblioteca.getCatalogo().getNumLibros());
+                    case 6 -> miBiblioteca.exportarAFichero("libros.obj");
+                    case 0 -> System.out.println("Saliendo del sistema...");
+                    default -> System.out.println("Opción no válida.");
+                }
+            } catch (Excepciones e) {
+                System.err.println("ERROR: " + e.getMessage());
+            } catch (RuntimeException e) {
+                System.err.println("ERROR CRÍTICO: " + e.getMessage());
+            }
+        } while (opcion != 0);
+    }
+
+    private static void imprimirMenu() {
+        System.out.println("\n--- MENÚ DE GESTIÓN ---");
+        System.out.println("1. Agregar Libro");
+        System.out.println("2. Sacar (Eliminar) Libro");
+        System.out.println("3. Buscar Libro por ISBN");
+        System.out.println("4. Mostrar Catálogo Completo");
+        System.out.println("5. Consultar número de libros");
+        System.out.println("6. Exportar a fichero .obj");
+        System.out.println("0. Salir");
+        System.out.print("Seleccione una opción: ");
+    }
+
+    private static void menuAgregarLibro() throws Excepciones {
+        System.out.println("Género: 1. Terror  2. Comedia  3. Policiaca 4. Ensayo");
+        int genero = sc.nextInt();
+        sc.nextLine();
+
+        System.out.print("Autor: "); String autor = sc.nextLine();
+        System.out.print("Páginas: "); int pag = sc.nextInt();
+        sc.nextLine();
+        System.out.print("ISBN: "); String isbn = sc.nextLine();
+
+        Libro nuevoLibro = null;
+        switch (genero) {
+            case 1 -> {
+                System.out.print("Calificación (1-5): ");
+                int cal = sc.nextInt();
+                nuevoLibro = new Terror(autor, pag, isbn, cal);
+            }
+            case 2 -> {
+                System.out.print("Tipo de humor: ");
+                String humor = sc.nextLine();
+                nuevoLibro = new Comedia(autor, pag, isbn, humor);
+            }
+            case 3 -> {
+                System.out.print("Trama (1.Misterio / 2.Intriga): ");
+                int t = sc.nextInt();
+                sc.nextLine();
+                Policiaca.Trama trama = (t == 1) ? Policiaca.Trama.MISTERIO : Policiaca.Trama.INTRIGA;
+                System.out.print("Personaje principal: ");
+                String personaje = sc.nextLine();
+                nuevoLibro = new Policiaca(autor, pag, isbn, trama, personaje);
+            }
+            case 4 -> {
+                System.out.print("Calificación (1-5): ");
+                int cal = sc.nextInt();
+                nuevoLibro = new Ensayo(autor, pag, isbn, cal);
+            }
+        }
+        if (nuevoLibro != null) miBiblioteca.getCatalogo().agregarLibro(nuevoLibro);
+    }
+
+    private static void buscarLibro() throws Excepciones {
+        System.out.print("Introduce ISBN a buscar: ");
+        String isbn = sc.nextLine();
+        Libro encontrado = miBiblioteca.getCatalogo().buscarPorIsbn(isbn);
+        System.out.println("Información encontrada: " + encontrado);
+    }
+
+    private static void eliminarLibro() throws Excepciones {
+        System.out.print("Introduce ISBN del libro a eliminar: ");
+        String isbn = sc.nextLine();
+        miBiblioteca.getCatalogo().sacarLibro(isbn);
+        System.out.println("Libro eliminado con éxito.");
+    }
+}
+
+
+import java.io.Serializable;
+
+public abstract class Libro implements Serializable {
+    private String autor;
+    private int numPaginas;
+    private String isbn;
+
+    public Libro(String autor, int numPaginas, String isbn) {
+        this.autor = autor;
+        this.numPaginas = numPaginas;
+        this.isbn = isbn;
+    }
+
+    public String getIsbn() { return isbn; }
+
+    @Override
+    public String toString() {
+        return String.format("ISBN: %s | Autor: %s | Págs: %d", isbn, autor, numPaginas);
+    }
+}
+
+class Terror extends Libro {
+    private int calificacion;
+    public Terror(String autor, int paginas, String isbn, int calificacion) { super(autor,paginas, isbn); this.calificacion = calificacion; }
+}
+
+class Ensayo extends Libro {
+    private int calificacion;
+    public Ensayo(String autor, int paginas, String isbn, int calificacion) { super(autor,paginas, isbn); this.calificacion = calificacion; }
+}
+
+class Comedia extends Libro {
+    private String tipoHumor;
+    public Comedia(String autor, int paginas, String isbn, String humor) { super(autor, paginas, isbn); this.tipoHumor = humor; }
+}
+
+class Policiaca extends Libro {
+    enum Trama { MISTERIO, INTRIGA }
+    private Trama trama;
+    private String personaje;
+    public Policiaca(String autor, int paginas, String isbn, Trama tipoTrama, String personaje) {
+        super(autor, paginas, isbn); this.trama = tipoTrama; this.personaje = personaje;
+    }
+}
+
+
+import java.io.*;
+import java.util.ArrayList;
+
+public class Biblioteca {
+    private String nombre;
+    private String director;
+    private Catalogo catalogo;
+
+    public Biblioteca(String nombre, String director) {
+        this.nombre = nombre;
+        this.director = director;
+    }
+
+    public class Catalogo {
+        private Libro[] listaLibros;
+        private int capacidad;
+        private int contador = 0;
+
+        public Catalogo(int capacidad) {
+            this.capacidad = capacidad;
+            this.listaLibros = new Libro[capacidad];
+        }
+
+        public void agregarLibro(Libro libro) throws Excepciones {
+            if (contador >= capacidad) throw new Excepciones("Error: Catálogo lleno.");
+            for (int i = 0; i < contador; i++) {
+                if (listaLibros[i].getIsbn().equals(libro.getIsbn())) {
+                    System.out.println("El libro con ISBN " + libro.getIsbn() + " ya existe.");
+                    return;
+                }
+            }
+            listaLibros[contador++] = libro;
+        }
+        public void sacarLibro(String isbn) throws Excepciones {
+            int indiceEncontrado = -1;
+            for (int i = 0; i < contador; i++) {
+                if (listaLibros[i].getIsbn().equals(isbn)) {
+                    indiceEncontrado = i;
+                    break;
+                }
+            }
+
+            if (indiceEncontrado == -1) {
+                throw new Excepciones("Error: No se puede eliminar, el libro no existe.");
+            }
+
+            for (int i = indiceEncontrado; i < contador - 1; i++) {
+                listaLibros[i] = listaLibros[i + 1];
+            }
+            listaLibros[--contador] = null;
+        }
+
+        public Libro buscarPorIsbn(String isbn) throws Excepciones {
+            for (int i = 0; i < contador; i++) {
+                if (listaLibros[i].getIsbn().equals(isbn)) return listaLibros[i];
+            }
+            throw new Excepciones("Error: Libro con ISBN " + isbn + " no encontrado.");
+        }
+
+        public void mostrarLibros() {
+            for (int i = 0; i < contador; i++) System.out.println(listaLibros[i]);
+        }
+
+        public int getNumLibros() { return contador; }
+        public Libro[] getLibros() { return listaLibros; }
+    }
+
+    public void inicializarCatalogo(int n) { this.catalogo = new Catalogo(n); }
+
+    public Catalogo getCatalogo() {
+        if (this.catalogo == null) throw new RuntimeException("El catálogo no ha sido inicializado.");
+        return this.catalogo;
+    }
+
+    public void exportarAFichero(String ruta) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(ruta))) {
+            oos.writeObject(this.catalogo.getLibros());
+            System.out.println("Datos exportados a " + ruta);
+        } catch (IOException e) {
+            System.out.println("Error al exportar: " + e.getMessage());
+        }
+    }
+}
+
+
+public class Excepciones extends Exception {
+    public Excepciones (String mensaje) {
+        super(mensaje);
+    }
+}
